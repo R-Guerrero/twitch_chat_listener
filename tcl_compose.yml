@@ -1,0 +1,101 @@
+version: "3"
+
+services:
+
+  chat_listener:
+    build: .
+    image: tcl_python
+    container_name: python
+    depends_on:
+      - "kafka"
+      - "chrome"
+      - "mongodb_raw"
+      - "mongodb_processed"
+      - "elasticsearch-kibana"
+    stdin_open: true
+    tty: true
+    logging:
+      driver: "none"
+    volumes:
+      - "/home/$USER/Desktop/twitch_chat_listener/output/:/usr/app/src/output"
+  
+  chrome:
+    image: selenium/standalone-chrome:latest
+    container_name: chrome
+    ports:
+      - "4444:4444"
+    privileged: true
+    shm_size: 2g
+    restart: always
+    logging:
+      driver: "none"
+
+
+  mongodb_raw:
+    image: mongo:latest
+    container_name: mongodb_raw
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: rootpassword
+    ports:
+      - "27017:27017"
+    volumes:
+      - "/var/lib/mongodb-raw:/data/db"
+    restart: always
+    logging:
+      driver: "none"
+
+
+  mongodb_processed:
+    image: mongo:latest
+    container_name: mongodb_processed
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: rootpassword
+    ports:
+      - "27018:27017"
+    volumes:
+      - "/var/lib/mongodb-processed:/data/db"
+    restart: always
+    logging:
+      driver: "none"
+
+
+  zookeeper:
+    image: wurstmeister/zookeeper:latest
+    container_name: zookeeper
+    ports:
+      - "2181:2181"
+    logging:
+      driver: "none"
+
+
+  kafka:
+    image: wurstmeister/kafka:latest
+    container_name: kafka
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_ADVERTISED_HOST_NAME: kafka
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+    depends_on:
+      - "zookeeper"
+    logging:
+      driver: "none"
+
+
+  elasticsearch-kibana:
+    image: nshou/elasticsearch-kibana:latest  # Elasticsearch/Kibana 7.16.2
+    container_name: elasticsearch-kibana
+    environment:
+      - xpack.security.enabled=false
+      - "discovery.type=single-node"
+    ports:
+      - "9200:9200"
+      - "5601:5601"
+    restart: always
+    logging:
+      driver: "none"
+
+# Logging driver set to "none" prevents the Docker-Compose terminal to be kept alive, showing logs and waiting to capture CTRL+C to gracefully stop all containers.
+# Containers can be gracefully stopped from another terminal with the command "docker-compose -f tcl_compose.yml stop".
