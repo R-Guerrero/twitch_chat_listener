@@ -1,4 +1,4 @@
-# twitch_chat_listener
+# Twitch Chat Listener
 Real time sentiment analysis on Twitch chat messages.
 
 This project gives shape to a tool called Twitch Chat Listener, capable of performing real-time sentiment 
